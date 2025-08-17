@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeuroOracle | Your Emotional Weather</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Space Grotesk', sans-serif; }
+    body {
+      background: url('static/images/background.png') no-repeat center center fixed;
+      background-size: cover; color: #fff; min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; padding: 2rem;
+      position: relative;
+    }
+    h1 {
+      font-size: 3rem; font-weight: bold;
+      background: linear-gradient(to right, #fceabb, #f8b500);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-align: center; margin-bottom: 1rem; z-index: 1;
+    }
+    .container {
+      width: 100%; max-width: 650px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px; padding: 2rem; backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+      z-index: 1; animation: fadeIn 2s ease-in-out;
+    }
+    label, p { font-size: 1.1rem; margin-bottom: 0.5rem; }
+    select, textarea {
+      width: 100%; padding: 0.8rem; margin-bottom: 1.2rem;
+      border: none; border-radius: 10px; background: rgba(255, 255, 255, 0.1);
+      color: #fff; font-size: 1rem;
+    }
+    button {
+      background: linear-gradient(to right, #6a11cb, #2575fc);
+      border: none; color: white; padding: 0.8rem 2rem;
+      border-radius: 50px; font-size: 1rem; cursor: pointer; transition: 0.3s ease;
+    }
+    button:hover { box-shadow: 0 0 15px #2575fc; transform: scale(1.05); }
+    .output {
+      margin-top: 2rem; padding: 1rem; background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px; white-space: pre-wrap; z-index: 1;
+      max-height: 300px; overflow-y: auto;
+    }
+    .nav-buttons {
+      display: flex; justify-content: space-between; flex-wrap: wrap;
+      gap: 0.5rem; margin-top: 1rem;
+    }
+    .nav-buttons button, .nav-buttons a {
+      flex: 1 1 48%;
+      text-decoration: none;
+    }
+    .nav-buttons a button {
+      width: 100%;
+    }
+    .logo { width: 80px; margin-bottom: 1rem; z-index: 1; }
+    footer {
+      margin-top: 1.5rem;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #aaa;
+      z-index: 1;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+
+<body>
+  <img src="static/logo/logo.png" alt="NeuroOracle Logo" class="logo">
+  <h1>NeuroOracle</h1>
+
+  <div class="container">
+    <form id="moodForm">
+      <label for="mood">🌤️ What's your current mood?</label>
+      <select id="mood" name="mood" required>
+        <option value="Happy 😊">Happy 😊</option>
+        <option value="Sad 😔">Sad 😔</option>
+        <option value="Angry 😠">Angry 😠</option>
+        <option value="Fearful 😨">Fearful 😨</option>
+        <option value="Surprised 😲">Surprised 😲</option>
+        <option value="Disgusted 🤢">Disgusted 🤢</option>
+        <option value="Neutral 😐">Neutral 😐</option>
+      </select>
+
+      <label for="day">🗓️ How was your day?</label>
+      <textarea id="day" name="day" rows="3" placeholder="Write about your day..." required></textarea>
+
+      <button type="submit">Log Mood</button>
+    </form>
+
+    <div class="nav-buttons">
+      <button type="button" onclick="revealInsight()">🔮 Reveal Insight</button>
+      <button type="button" onclick="viewMoodHistory()">📊 View Mood History</button>
+      <!-- Link to separate mood graph page -->
+      <a href="/mood-graph" style="flex: 1 1 100%;">
+        <button type="button">📈 View Mood Graph</button>
+      </a>
+    </div>
+
+    <div class="output" id="insightOutput"></div>
+  </div>
+
+  <footer>
+    Crafted with ❤️ by Eagle | NeuroOracle 2025
+  </footer>
+
+  <script>
+    const form = document.getElementById('moodForm');
+    const outputDiv = document.getElementById('insightOutput');
+    let isHistoryVisible = false;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const mood = document.getElementById('mood').value;
+      const day = document.getElementById('day').value;
+      try {
+        const res = await fetch('/log_mood', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mood, day })
+        });
+        const data = await res.json();
+        outputDiv.innerText = data.message;
+      } catch {
+        outputDiv.innerText = '❌ Failed to log mood. Try again later.';
+      }
+    });
+
+    async function revealInsight() {
+      const mood = document.getElementById('mood').value;
+      outputDiv.innerText = '🔮 Reflecting on your emotional weather...';
+      try {
+        const res = await fetch('/insight', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mood })
+        });
+        const data = await res.json();
+        if (data.insight && data.quote) {
+          outputDiv.innerText = `${data.insight}\n\n📝 ${data.quote}`;
+        } else {
+          outputDiv.innerText = '⚠️ Could not load insight or quote.';
+        }
+      } catch {
+        outputDiv.innerText = '⚠️ Something went wrong while fetching your insight.';
+      }
+    }
+
+    async function viewMoodHistory() {
+      if (isHistoryVisible) {
+        outputDiv.innerText = '';
+        isHistoryVisible = false;
+        return;
+      }
+      outputDiv.innerText = '📜 Fetching your mood history...';
+      try {
+        const res = await fetch('/view_moods');
+        const data = await res.json();
+        if (data.moods && data.moods.length) {
+          const history = data.moods.map(m => `🕒 ${m.timestamp} — ${m.mood}\n📖 ${m.day}`).join('\n\n');
+          outputDiv.innerText = history;
+          isHistoryVisible = true;
+        } else {
+          outputDiv.innerText = 'No mood entries found.';
+        }
+      } catch {
+        outputDiv.innerText = '⚠️ Could not load mood history.';
+      }
+    }
+  </script>
+</body>
+</html>
